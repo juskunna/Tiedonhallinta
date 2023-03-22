@@ -17,7 +17,6 @@ except mysql.connector.Error as err:
         print(f"MySQL-yhdistämisessä virhe: {err.errno}")
     exit()
 
-
 # Kysely tietokannasta tehtään kursorilla joka saadaan tietokannan yhteys-objektista
 # cursor = db_conn.cursor()
 
@@ -36,7 +35,6 @@ except mysql.connector.Error as err:
         print(f"Virhe suoritettaessa kyselyä: {err.errno}")
         print(f"Virheviesti: {err.msg}")
     exit()
-
 
 # for result in cursor:
 #     # tulostetaan yksittäinen result-objekti komentoriville
@@ -65,7 +63,7 @@ sql = "INSERT INTO actor (first_name, last_name) VALUES ('%s', '%s');" % (etunim
 print(sql)
 
 try:
-#    db_conn.start_transaction()
+    #    db_conn.start_transaction()
     cursor.execute(sql)
 except mysql.connector.Error as err:
     print(f"Virhe lisättäessä tietoa: {err.errno}")
@@ -73,13 +71,15 @@ except mysql.connector.Error as err:
     db_conn.rollback()
 else:
     # Suoritetaan vain jos virhettä ei tapahdu
+
+    print(f"Viimeisin lisätty ID: {cursor.lastrowid}")
     db_conn.commit()
+
 # Suljetaan yhteys tietokantaan
 db_conn.close()
 
-
 # Kysely voidaan muodostaa myös yhdistämällä ohjelmallisesti kyselyn lausekkeen
 # osia merkkijonoksi, joka muodostaa halutun kyselyn
-#query = "SELECT * FROM actor WHERE first_name = '%s' AND last_name = '%s;" % (firstname, lastname)
+# query = "SELECT * FROM actor WHERE first_name = '%s' AND last_name = '%s;" % (firstname, lastname)
 
-#query = f"SELECT * FROM actor WHERE first_name = '{firstname}' AND last_name = '{lastname}'"
+# query = f"SELECT * FROM actor WHERE first_name = '{firstname}' AND last_name = '{lastname}'"
