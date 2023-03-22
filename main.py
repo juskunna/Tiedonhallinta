@@ -27,9 +27,10 @@ cursor = db_conn.cursor(dictionary=True)
 
 # Suoritetaan kysely
 try:
-    cursor.execute("SELECT * FROM film LIMIT 3")
+
+    cursor.execute("SELECT * FROM actor ORDER BY last_update DESC LIMIT 10")
 except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_SYNTAX_ERROR
+    if err.errno == errorcode.ER_SYNTAX_ERROR:
         print("Syntaksivirhe!")
     else:
         print(f"Virhe suoritettaessa kyselyä: {err.errno}")
@@ -50,11 +51,29 @@ except mysql.connector.Error as err:
 # Haetaan kaikki tulokset kerralla yhteen muuttujaan
 data = cursor.fetchall()
 for row in data:
-    print(row['title'], row['release_year'])
+    print(row['actor_id'], row['first_name'], row['last_name'])
 
 # Tulostetaan vielä rivimäärä
 print("Yhteensä: ", cursor.rowcount)
 
+# Lisätään itsemme näyttelijäksi
+print("Anna lisättävän näyttelijän nimi")
+etunimi = input("Etunimi: ")
+sukunimi = input("Sukunimi: ")
+
+sql = "INSERT INTO actor (first_name, last_name) VALUES ('%s', '%s');" % (etunimi, sukunimi)
+print(sql)
+
+try:
+#    db_conn.start_transaction()
+    cursor.execute(sql)
+except mysql.connector.Error as err:
+    print(f"Virhe lisättäessä tietoa: {err.errno}")
+    print(f"Virheviesti: {err.msg}")
+    db_conn.rollback()
+else:
+    # Suoritetaan vain jos virhettä ei tapahdu
+    db_conn.commit()
 # Suljetaan yhteys tietokantaan
 db_conn.close()
 
