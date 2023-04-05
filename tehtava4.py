@@ -64,6 +64,7 @@ def student_search():
     l_name = input("Anna opiskelijan sukunimi ")
 
     try:
+        # Haetaan students-taulusta opiskelijan ID ja nimi
         cursor.execute("SELECT * FROM students WHERE first_name=%s AND last_name=%s ", (f_name, l_name))
         student_data = cursor.fetchall()
 
