@@ -59,7 +59,21 @@ def student_add():
 
 # Opiskelijan haun funktio
 def student_search():
-    pass
+    # Kysytään käyttäjältä haettavan opiskelijan tiedot
+    f_name = input("Anna opiskelijan etunimi ")
+    l_name = input("Anna opiskelijan sukunimi ")
+
+    try:
+        cursor.execute("SELECT * FROM students WHERE first_name=%s AND last_name=%s ", (f_name, l_name))
+        student_data = cursor.fetchall()
+
+        for student in student_data:
+            print(f"{student['id']}: {student['first_name']} {student['last_name']}")
+
+
+    except mysql.connector.Error as err:
+        print(f"Virhe opiskelijahaussa: {err.errno}")
+        print(f"Virheviesti: {err.msg}")
 
 # Opiskelijan tietojen päivityksen funktio
 def student_update():
@@ -69,7 +83,7 @@ def student_update():
 
 choose_action = ""
 while choose_action not in ("l", "h", "p" ):
-    choose_action = input("L: Opiskelijan lisäys\nH: Opiskelijan haku\nP: Opiskelijan tietojen päivitys?\n [L/H/P] ")
+    choose_action = input("Haluatko\nL: Lisätä opiskelijan\nH: Hakea opiskelijan tiedot\nP: Päivittää opiskelijan suorituksia?\n [L/H/P] ")
     choose_action = choose_action.lower()
 
     if choose_action == "l":

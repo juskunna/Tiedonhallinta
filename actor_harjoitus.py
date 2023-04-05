@@ -45,7 +45,7 @@ def actor_search():
 
             # Haetaan myös näyttelijän elokuvat
             cursor2.execute(
-                "SELECT film. film_id, film.title FROM `film_actor` JOIN film ON film.film_id = film_actor.film_id WHERE film_actor.actor_id = %s",
+                "SELECT film.film_id, film.title FROM `film_actor` JOIN film ON film.film_id = film_actor.film_id WHERE film_actor.actor_id = %s",
                 (row['actor_id'],))
 
             film_data = cursor2.fetchall()
