@@ -2,9 +2,9 @@
 Toteuta tehtävässä annetun tietokannan päälle ohjelma, joka toteuttaa alla pyydetyt toiminnot.
 Tässä tehtävässä käytettävä tietokantarakenne ja data on sama kuin tehtävässä 2, joten voit käyttää
 sen kaaviota apuna.
-1. Opiskelijan lisääminen tietokantaan käyttäjän syötteen perusteella
-a. Kysy tarvittavat tiedot ja lisää opiskelija tietokantaan. Tulosta onnistuneen
-lisäämisen jälkeen opiskelijan ID
+X1. Opiskelijan lisääminen tietokantaan käyttäjän syötteen perusteella
+Xa. Kysy tarvittavat tiedot ja lisää opiskelija tietokantaan. Tulosta onnistuneen
+Xlisäämisen jälkeen opiskelijan ID
 2. Opiskelijan haku etunimellä ja sukunimellä käyttäjän syötteen perusteella
 a. Tulosta opiskelijan tiedot (nimi, id, kurssisuoritukset)
 b. Tulosta opiskelijan kurssisuoritukset, näytä kurssin nimi, arvosana ja suorituspäivä ja
@@ -57,9 +57,11 @@ def student_add():
     # Tehdään muutoksista pysyviä
     db_conn.commit()
 
+# Opiskelijan haun funktio
 def student_search():
     pass
 
+# Opiskelijan tietojen päivityksen funktio
 def student_update():
     pass
 
@@ -74,10 +76,14 @@ while choose_action not in ("l", "h", "p" ):
         # Opiskelijan lisäys
         student_add()
     elif choose_action == "h":
-        # Elokuvan haku
+        # Opiskelijan haku
         student_search()
     elif choose_action == "p":
+        # Opiskelijan tietojen päivitys
         student_update()
     else:
         # Tuntematon haku
         print("Tuntematon valinta")
+
+# Suljetaan yhteys tietokantaan
+db_conn.close()
