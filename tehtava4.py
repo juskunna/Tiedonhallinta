@@ -36,7 +36,7 @@ except mysql.connector.Error as err:
 
 # Kyselyitä varten cursor
 cursor = db_conn.cursor(dictionary=True)
-
+cursor2 = db_conn.cursor(dictionary=True)
 
 # ---- Funktiot
 
@@ -68,8 +68,23 @@ def student_search():
         cursor.execute("SELECT * FROM students WHERE first_name=%s AND last_name=%s ", (f_name, l_name))
         student_data = cursor.fetchall()
 
+        # Käsitellään haettu tieto.
+        student_ids = []
+        # Tulostetaan ensin oppilaan ID ja nimi.
         for student in student_data:
-            print(f"{student['id']}: {student['first_name']} {student['last_name']}")
+            print(f"\n{student['id']:5} {student['first_name']} {student['last_name']}")
+            student_ids.append(student['id'])
+
+        # Haetun oppilaan ID:n perusteella tulostetaan kurssisuoritukset.
+        for student_id in student_ids:
+            cursor2.execute("SELECT course.name, grades.grade, grades.completion_date, CONCAT_WS(' ', teachers.first_name, teachers.last_name) AS teacher FROM course JOIN grades ON grades.course_id = course.course_id JOIN teachers ON teachers.teacher_id = course.teacher JOIN students ON students.id = grades.student_id WHERE students.id = %s", (student_id,))
+            course_data = cursor2.fetchall()
+
+        # Muotoiltu tuloste näyttämään siistiltä.
+        print("--Kurssisuoritukset--")
+        print("{:20} {:5} {:20} {}".format("Kurssi", "Arvosana", "Suorituspäivä", "Opettaja"))
+        for course in course_data:
+            print("{:20} {:>5} {:>15} {:>20}".format(course['name'], course['grade'], course['completion_date'].strftime('%d.%m.%Y'), course['teacher']))
 
 
     except mysql.connector.Error as err:
