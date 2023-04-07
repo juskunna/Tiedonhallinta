@@ -97,9 +97,8 @@ def student_update():
 
 # ---- Toiminnon valinta
 
-choose_action = ""
-while choose_action not in ("l", "h", "p" ):
-    choose_action = input("Haluatko\nL: Lisätä opiskelijan\nH: Hakea opiskelijan tiedot\nP: Päivittää opiskelijan suorituksia?\n [L/H/P] ")
+while True:
+    choose_action = input("Haluatko\nL: Lisätä opiskelijan\nH: Hakea opiskelijan tiedot\nP: Päivittää opiskelijan suorituksia\nQ: Lopettaa ohjelman?\n[L/H/P/Q] ")
     choose_action = choose_action.lower()
 
     if choose_action == "l":
@@ -111,9 +110,17 @@ while choose_action not in ("l", "h", "p" ):
     elif choose_action == "p":
         # Opiskelijan tietojen päivitys
         student_update()
+    elif choose_action == "q":
+        # Lopetus
+        print("Ohjelma suljetaan...")
+        break
     else:
-        # Tuntematon haku
-        print("Tuntematon valinta")
+        # Virheellinen syöte
+        try:
+            raise ValueError("Tuntematon valinta\n")
+        except ValueError as e:
+            print(f"Virhe: {e}")
+
 
 # Suljetaan yhteys tietokantaan
 db_conn.close()
