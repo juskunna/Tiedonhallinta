@@ -20,6 +20,7 @@ hetken aikaleimalla.
 4. Toteuta kaikki kyselyt siten, että SQL-injektiot eivät ole mahdollisia
 """
 
+import datetime
 # Otetaan käyttöön mysql-kirjasto
 import mysql.connector
 
@@ -40,6 +41,7 @@ cursor2 = db_conn.cursor(dictionary=True)
 
 # ---- Funktiot
 
+
 # Opiskelijan lisäyksen funktio
 def student_add():
     # first_name, last_name, location
@@ -56,6 +58,7 @@ def student_add():
 
     # Tehdään muutoksista pysyviä
     db_conn.commit()
+
 
 # Opiskelijan haun funktio
 def student_search():
@@ -86,19 +89,38 @@ def student_search():
         for course in course_data:
             print("{:20} {:>5} {:>15} {:>20}".format(course['name'], course['grade'], course['completion_date'].strftime('%d.%m.%Y'), course['teacher']))
 
+        add_course = input("\nHaluatko lisätä uuden kurssisuorituksen tälle opiskelijalle? (k/e)")
+        if add_course.lower() == 'k':
+            course_add(student_id)
+        elif add_course.lower() == 'e':
+            return
 
     except mysql.connector.Error as err:
         print(f"Virhe opiskelijahaussa: {err.errno}")
         print(f"Virheviesti: {err.msg}")
 
+
 # Opiskelijan tietojen päivityksen funktio
 def student_update():
-    pass
+    print("Kurssit:\n1: Tiedonhallinta\n2: Advanced linux\n3: Peliohjelmointi\n4: Tietokonetekniikka\n5: Oppimaan oppiminen\n")
+    course_id = input("Anna kurssin ID: ")
+
+
+def course_add(student_id):
+    print("Kurssit:\n1: Tiedonhallinta\n2: Advanced linux\n3: Peliohjelmointi\n4: Tietokonetekniikka\n5: Oppimaan oppiminen\n")
+    course_id = input("Anna kurssin tunniste: ")
+    course_grade = input("Anna kurssin arvosana(0-5): \n")
+    completion_date = datetime.datetime.now().strftime('%Y-%m-%d')
+
+    cursor.execute("INSERT INTO grades (course_id, grade, student_id, completion_date) VALUES (%s, %s, %s, %s)", (course_id, course_grade, student_id, completion_date))
+
+    db_conn.commit()
+    print("Kurssisuoritus lisätty onnistuneesti.")
 
 # ---- Toiminnon valinta
 
 while True:
-    choose_action = input("Haluatko\nL: Lisätä opiskelijan\nH: Hakea opiskelijan tiedot\nP: Päivittää opiskelijan suorituksia\nQ: Lopettaa ohjelman?\n[L/H/P/Q] ")
+    choose_action = input("Haluatko\nL: Lisätä opiskelijan\nH: Hakea opiskelijan tiedot\nP: Päivittää\Lisätä opiskelijan suorituksia\nQ: Lopettaa ohjelman?\n[L/H/P/Q] ")
     choose_action = choose_action.lower()
 
     if choose_action == "l":
