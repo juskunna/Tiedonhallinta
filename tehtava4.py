@@ -40,6 +40,7 @@ cursor = db_conn.cursor(dictionary=True)
 cursor2 = db_conn.cursor(dictionary=True)
 
 courses = ["Tiedonhallinta", "Advanced Linux", "Peliohjelmointi", "Tietokonetekniikka", "Oppimaan oppiminen"]
+new_date = datetime.datetime.now().strftime('%Y-%m-%d')
 
 # ---- Funktiot
 
@@ -48,7 +49,7 @@ def student_add():
     # first_name, last_name, location
     f_name = input("Anna etunimi ")
     l_name = input("Anna sukunimi ")
-    location = input("Anna paikkakunta \n")
+    location = input("Anna paikkakunta ")
 
     # Lisätään opiskelija tietokantaan
     cursor.execute("INSERT INTO students (first_name, last_name, location) VALUES (%s, %s, %s)", (f_name, l_name, location))
@@ -62,7 +63,7 @@ def student_add():
 
 
 # Opiskelijan haun funktio
-def student_search():
+def get_student_data():
     # Kysytään käyttäjältä haettavan opiskelijan tiedot
     f_name = input("Anna opiskelijan etunimi ")
     l_name = input("Anna opiskelijan sukunimi ")
@@ -73,66 +74,68 @@ def student_search():
         student_data = cursor.fetchall()
 
         # Käsitellään haettu tieto.
-        student_ids = []
         # Tulostetaan ensin oppilaan ID ja nimi.
         for student in student_data:
-            print(f"\n{student['id']:5} {student['first_name']} {student['last_name']}")
-            student_ids.append(student['id'])
+            print(f"\n{student['id']:5} {student['first_name']} {student['last_name']}\n")
 
+        # Palautetaan lopuksi haettu data jotta saadaan se muiden funktioiden käyttöön
+        return student_data
+
+    except mysql.connector.Error as err:
+        print(f"Virhe opiskelijahaussa: {err.errno}")
+        print(f"Virheviesti: {err.msg}")
+
+# Haetun oppilaan kurssisuoritusten näytön funktio
+def show_student_data(student_data):
+
+    # Otetaan get_student_data() hakemasta tiedosta oppilaan id
+    student_id = student_data[0]['id']
+
+    try:
         # Haetun oppilaan ID:n perusteella tulostetaan kurssisuoritukset.
-        for student_id in student_ids:
-            cursor2.execute("SELECT course.name, grades.grade, grades.completion_date, CONCAT_WS(' ', teachers.first_name, teachers.last_name) AS teacher FROM course JOIN grades ON grades.course_id = course.course_id JOIN teachers ON teachers.teacher_id = course.teacher JOIN students ON students.id = grades.student_id WHERE students.id = %s", (student_id,))
-            course_data = cursor2.fetchall()
+        cursor.execute("SELECT course.name, grades.grade, grades.completion_date, CONCAT_WS(' ', teachers.first_name, teachers.last_name) AS teacher FROM course JOIN grades ON grades.course_id = course.course_id JOIN teachers ON teachers.teacher_id = course.teacher JOIN students ON students.id = grades.student_id WHERE students.id = %s", (student_id,))
+        course_data = cursor.fetchall()
 
         # Muotoiltu tuloste näyttämään siistiltä.
-        print("--Kurssisuoritukset--")
+        print(f"\n--Opiskelijan {student_id} kurssisuoritukset--")
         print("{:20} {:5} {:20} {}".format("Kurssi", "Arvosana", "Suorituspäivä", "Opettaja"))
         for course in course_data:
             print("{:20} {:>5} {:>15} {:>20}".format(course['name'], course['grade'], course['completion_date'].strftime('%d.%m.%Y'), course['teacher']))
 
         add_course = input("\nHaluatko lisätä uuden kurssisuorituksen tälle opiskelijalle? (K/E) ")
         if add_course.lower() == 'k':
-            course_add(student_id)
+            student_update(student_data)
         elif add_course.lower() == 'e':
             return
 
     except mysql.connector.Error as err:
-        print(f"Virhe opiskelijahaussa: {err.errno}")
+        print(f"Virhe kurssisuoritusten haussa: {err.errno}")
         print(f"Virheviesti: {err.msg}")
 
-# Opiskelijan tietojen päivityksen funktio
-def student_update():
 
-    new_date = datetime.datetime.now().strftime('%Y-%m-%d')
-
-    # Pyydetään käsiteltävän opiskelijan nimi
-    f_name = input("Anna oppilaan etuimi: ")
-    l_name = input("Anna oppilaan sukunimi: ")
-
-    try:
-        # Haetaan students-taulusta opiskelijan ID ja nimi
-        cursor.execute("SELECT * FROM students WHERE first_name=%s AND last_name=%s", (f_name, l_name))
-        student_data = cursor.fetchall()
-
-        # Tulostetaan ensin oppilaan ID ja nimi.
-        for student in student_data:
-            print(f"\n{student['id']:5} {student['first_name']} {student['last_name']}\n")
-            # Tallennetaan oppilaan id muuttujaan kurssin hakua varten.
-            selected_student = student_data[0]['id']
-
-    except mysql.connector.Error as err:
-        print(f"Virhe opiskelijahaussa: {err.errno}")
-        print(f"Virheviesti: {err.msg}")
-
+def get_course_id(courses):
     # Pyydetään käyttäjältä käsiteltävän kurssin id.
     print(f"Kurssit:\n1: {courses[0]}\n2: {courses[1]}\n3: {courses[2]}\n4: {courses[3]}\n5: {courses[4]}\n")
     course_id = int(input("Anna kurssin ID: "))
+    course_name = courses[course_id - 1]
 
-    course_name = courses[course_id]
+    return course_id, course_name
+
+
+# Opiskelijan tietojen päivityksen funktio
+def student_update(student_data):
+
+    student_ids = student_data[0]['id']
+    student_fname = student_data[0]['first_name']
+    student_lname = student_data[0]['last_name']
+
+    selected_course_id, selected_course_name = get_course_id(courses)
 
     # Haetaan tietokannasta annetun kurssin tiedot valitun oppilaan osalta.
-    cursor.execute("SELECT * FROM grades WHERE student_id = %s AND course_id = %s", (selected_student, course_id))
-    student_course = cursor.fetchall()
+    cursor.execute("SELECT * FROM grades WHERE student_id = %s AND course_id = %s", (student_ids, selected_course_id))
+    student_course = cursor.fetchone()
+    if student_course is not None:
+        grade = student_course['grade']
 
     # Tarkistetaan haettujen rivien määrä
     lkm = cursor.rowcount
@@ -141,7 +144,7 @@ def student_update():
     if lkm >= 1:
 
         # Ilmoitetaan löyvyvästä suorituksesta käyttäjälle arvosanan kera.
-        print(f"Oppilaalta {student['first_name']} {student['last_name']} löytyy kurssin {course_name} suoritus arvosanalla {student_course[0]['grade']}'.\n")
+        print(f"Oppilaalta {student_fname} {student_lname} löytyy kurssin {selected_course_name} suoritus arvosanalla {grade}'.\n")
         # Tiedustellaan halutaanko suoritusta päivittää.
         update_grade = input("Haluatko päivittää suorituksen? [K/E] ")
 
@@ -150,31 +153,19 @@ def student_update():
             # Tallennetaan uusi arvosana sekä tämän hetken aikaleimat muuttujiin
             new_grade = input("Anna uusi arvosana (0-5): ")
 
-            cursor2.execute("UPDATE grades SET grade = %s AND completion_date = %s WHERE student_id = %s AND course_id = %s", (new_grade, new_date, selected_student, course_id))
+            cursor2.execute("UPDATE grades SET grade = %s, completion_date = %s WHERE student_id = %s AND course_id = %s", (new_grade, new_date, student_ids, selected_course_id))
 
-            print(f"Opiskelijan {student['first_name']} {student['last_name']}, {course_name}-kurssin arvosana on päivitetty.\n")
+            print(f"Opiskelijan {student_fname} {student_lname}, {selected_course_name}-kurssin arvosana on päivitetty.\n")
 
         elif update_grade.lower() == 'e':
             return
     else:
         new_grade2 = input("Anna Kurssin arvosana (0-5): ")
-        cursor2.execute("INSERT INTO grades (student_id, course_id, grade, completion_date) VALUES (%s, %s, %s, %s)", (selected_student, course_id, new_grade2, new_date))
+        cursor2.execute("INSERT INTO grades (student_id, course_id, grade, completion_date) VALUES (%s, %s, %s, %s)", (student_ids, selected_course_id, new_grade2, new_date))
         grade_id = cursor2.lastrowid
+        print(f"Opiskelijalle {student_fname} {student_lname} lisätty suoritus kurssille: {selected_course_name} tunnuksella: {grade_id}\n")
 
     db_conn.commit()
-    print(f"Opiskelijalle {student['first_name']} {student['last_name']} lisätty suoritus kurssille: {course_name} tunnuksella: {grade_id}\n")
-
-
-def course_add(student_id):
-    print(f"Kurssit:\n1: {courses[0]}\n2: {courses[1]}\n3: {courses[2]}\n4: {courses[3]}\n5: {courses[4]}\n")
-    course_id = input("Anna kurssin tunniste: ")
-    course_grade = input("Anna kurssin arvosana(0-5): ")
-    completion_date = datetime.datetime.now().strftime('%Y-%m-%d')
-
-    cursor.execute("INSERT INTO grades (course_id, grade, student_id, completion_date) VALUES (%s, %s, %s, %s)", (course_id, course_grade, student_id, completion_date))
-
-    db_conn.commit()
-    print("Kurssisuoritus lisätty onnistuneesti.\n")
 
 
 # ---- Toiminnon valinta
@@ -188,10 +179,14 @@ while True:
         student_add()
     elif choose_action == "h":
         # Opiskelijan haku
-        student_search()
+        student_ids = get_student_data()
+        if student_ids:
+            show_student_data(student_ids)
     elif choose_action == "p":
         # Opiskelijan tietojen päivitys
-        student_update()
+        student_ids = get_student_data()
+        if student_ids:
+         student_update(student_ids)
     elif choose_action == "q":
         # Lopetus
         print("Ohjelma suljetaan...")
